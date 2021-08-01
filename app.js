@@ -3,6 +3,7 @@ const app = express();
 const port = 4402;
 const moviesRouter = require("./routes/moviesRoute");
 const seriesRouter = require("./routes/seriesRoute");
+const categoryRouter = require("./routes/categoryRoute");
 
 require("express-async-errors");
 var cors = require("cors");
@@ -14,8 +15,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 
+app.use("/category", categoryRouter);
 app.use("/movies", moviesRouter);
-// app.use("/series", seriesRouter);
+app.use("/series", seriesRouter);
 
 app.use((err, req, res, next) => {
   console.error(err);

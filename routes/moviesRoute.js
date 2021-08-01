@@ -2,23 +2,21 @@ const Movies = require("../models/movies");
 const Category = require("../models/category");
 const express = require("express");
 const mongoose = require("mongoose");
+const { result } = require("lodash");
+const { query } = require("express-validator");
 
 require("express-async-errors");
 const router = express.Router();
 
 
-//-----------------------add---------------------------------------//
+//----------------------- add Movies -----------------------------------//
 router.post("/addMovie", async (req, res) => {
-    const { name, category } = req.body;
+    const { name, categoryId } = req.body;
     const newMovie = new Movies({
       name,
-      category
+      categoryId
     });
-    let movieAdded= await Movies.findByIdAndUpdate(name, {
-      $push: { movie: newMovie }
-    });
-    console.log("pushed", movie);
-    await movieAdded.save();
+    await newMovie.save();
     res.json({
       newMovie
     });
@@ -27,9 +25,20 @@ router.post("/addMovie", async (req, res) => {
 
 //----------------------get all Movies-----------------------------//
 router.get("/getAllMovies", async (req, res, next) => {
-  const movies = await Movies.find().populate("category");
-  res.json(movies);
+  const movies = await Movies.find().populate("categoryId");
+
+  let newMovies = movies.map(e=> (
+    e = {
+      name: e.name,
+      id: e.id,
+      categoryId: e.categoryId._id,
+      categoryName: e.categoryId.name
+    }
+  ))
+  
+  res.json(newMovies);
 });
+
 //-----------------get Movies by id ---------------------------//
 router.get("/:id", async (req, res, next) => {
   const { id } = req.params;
@@ -42,18 +51,18 @@ router.get("/:id", async (req, res, next) => {
 router.patch(
   "/Edit/:id",
   async (req, res, next) => {
-    id = req.movie.id;
+    id = req.params.id;
+    console.log("id",id)
     const {
       name,
-      category,
-      
-    } = req.body;
-    const movie = await Movies.findByIdAndUpdate(
+      categoryId,
+         } = req.body;
+     const movie = await Movies.findByIdAndUpdate(
       id,
       {
         $set: {
         name,
-        category
+        categoryId
         }
       },
       {
@@ -61,33 +70,64 @@ router.patch(
         runValidators: true,
         omitUndefined: true
       }
-    ).populate("category");
+    )
     res.status(200).json(movie);
   }
 );
 
+//-------------------------- delete movie -------------------------//
+router.delete("/:id",async(req,res,next)=>{
+  const {id} =req.params
+  const movieToDelete=await Movies.findByIdAndDelete(id)
+  res.json(movieToDelete)
+})
+
+//----------------------- search by name and category ----------------//
+// router.get("/search/?:name/?:id", async (req, res, next)=> {
+    
+//   const{name,id}=req.params;
+//   const movie= await Movies.find();
+//   let result= movie.filter(movie=> {
+//     if( movie.name.includes(name)||movie.id.includes(id))
+//     console.log(movie)
+//     return movie;
+//     });
+
+//     res.status(200).json(result);
+   
+//      })
 
 
 
-//////////////////////////Add category hereee//////////////////////////
-router.post("/addCat", async (req, res) => {
-  const { name } = req.body;
-  const newCategory = new Category({
-    name
-  });
-  await newCategory.save();
-  res.json({
-    newCategory
-  });
-});
+// router.get("/search",(req,res,next)=>{
+//   const searchedFeilds=req.query.name
+//   Movies.find({name:{$rejex:searchedFeilds,$options:'$i'}})
+//   .then(data=>
+//     res.send(data))
+// })
 
+////------------------ search by name and category ------------------///
+router.post("/search/:name?",async(req,res,next)=>{
+  const searchedFeilds=req.params.name 
+  const {categoryId}=req.body
 
+  if(searchedFeilds &&!categoryId){
+    let result= await Movies.find({ name: new RegExp(searchedFeilds, 'i')})
+    res.send(result)
 
-//------------------- get all -------------------//
-router.get("/getAllCategories", async (req, res, next) => {
-    const category = await Category.find().populate("category");
-    res.json(category);
-  });
+  }
+  else if(!searchedFeilds && categoryId){
+    let result= await Movies.find({categoryId:categoryId})
+    res.send(result)
+  }
 
+  else if (searchedFeilds && categoryId){
+    let result= await Movies.find({ name: new RegExp(searchedFeilds, 'i'),categoryId:categoryId})
+    res.send(result)
+  }
+  })
+  
 
 module.exports = router;
+
+

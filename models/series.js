@@ -7,26 +7,26 @@ const SeriesSchema = new mongoose.Schema(
       required: true,
       Min:2
     },
-    category: [
+    categoryId: 
       {
         type: mongoose.ObjectId,
         ref: "Category"
       }
-    ],
+    ,
 
   },
   {
 
     collection: "Series",
-    toJSON: {
-      virtuals: true,
-      transform: doc => {
-        return _.pick(doc, [
-          "id",
-          "category"
-        ]);
-      }
-    }
+    // toJSON: {
+    //   virtuals: true,
+    //   transform: doc => {
+    //     return _.pick(doc, [
+    //       "id",
+    //       "categoryId"
+    //     ]);
+    //   }
+    // }
 
   }
 );
